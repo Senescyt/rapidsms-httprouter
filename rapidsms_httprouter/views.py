@@ -60,7 +60,9 @@ class HandleIncomingThread(threading.Thread):
     def run(self):
         print "thread now handling incoming at %s" % str(datetime.now())
         try:
-            message = get_router().handle_incoming(self.data['backend'], self.data['sender'], self.data['message'])
+        	  sender = self.data['sender']
+            if (len(sender) < 12) : sender = '593' + sender
+            message = get_router().handle_incoming(self.data['backend'], sender, self.data['message'])
         except Exception as e:
             print e
             log.debug(str(e))
@@ -84,13 +86,14 @@ def receive(request):
 
     # otherwise, create the message
     data = form.cleaned_data
-
-    log.debug("[receive-msg] [{0}] received".format(data.get('sender', 'no-sender')))
+    sender = data.get('sender', 'no-sender');
+    log.debug("[sender] [{0}] received".format(sender))
+    log.debug("[receive-msg] [{0}] received".format(sender))
 
     if getattr(settings, 'CELERY_MESSAGE_PROCESSING', None):
-        handle_incoming.delay(get_router(), data['backend'], data.get('sender', 'no-sender'),
+        handle_incoming.delay(get_router(), data['backend'], sender,
                               data.get('message', 'no-message'))
-        log.debug("[receive-msg] [{0}] Message sent to celery.".format(str(data.get('sender', 'no-sender'))))
+        log.debug("[receive-msg] [{0}] Message sent to celery.".format(str(sender)))
         return HttpResponse("celery handler")
     elif getattr(settings, 'THREAD_MESSAGE_PROCESSING', None):
         log.debug("Handing off request to thread at %s" % str(datetime.now()))
@@ -98,13 +101,13 @@ def receive(request):
         log.debug("Message is being handled but request released at %s" % str(datetime.now()))
         return HttpResponse("Message Handled")
     else:
-        message = get_router().handle_incoming(data['backend'], data['sender'], data['message'])
+        message = get_router().handle_incoming(data['backend'], sender, data['message'])
         response = {}
         response['message'] = message.as_json()
         response['responses'] = [m.as_json() for m in message.responses.all()]
         response['status'] = "Message handled."
 
-        log.debug("[receive-msg] [{0}] Message handled".format(str(data.get('sender', 'no-sender'))))
+        log.debug("[receive-msg] [{0}] Message handled".format(str(sender)))
         # do we default to having silent responses?  200 means success in this case
         if getattr(settings, "ROUTER_SILENT", False) and (not 'echo' in data or not data.get('echo', 'no-echo')):
             return HttpResponse()
