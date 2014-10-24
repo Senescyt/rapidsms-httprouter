@@ -60,9 +60,9 @@ class HandleIncomingThread(threading.Thread):
     def run(self):
         print "thread now handling incoming at %s" % str(datetime.now())
         try:
-        	  sender = self.data['sender']
-            if (len(sender) < 12) : sender = '593' + sender
-            message = get_router().handle_incoming(self.data['backend'], sender, self.data['message'])
+        	sender = self.data['sender']
+        	if (len(sender) < 12) : sender = '593' + sender
+        	message = get_router().handle_incoming(self.data['backend'], sender, self.data['message'])
         except Exception as e:
             print e
             log.debug(str(e))
@@ -86,7 +86,7 @@ def receive(request):
 
     # otherwise, create the message
     data = form.cleaned_data
-    sender = data.get('sender', 'no-sender');
+    sender = data.get('sender', 'no-sender')
     log.debug("[sender] [{0}] received".format(sender))
     log.debug("[receive-msg] [{0}] received".format(sender))
 
