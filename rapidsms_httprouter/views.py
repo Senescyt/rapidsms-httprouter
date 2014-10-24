@@ -87,6 +87,7 @@ def receive(request):
     # otherwise, create the message
     data = form.cleaned_data
     sender = data.get('sender', 'no-sender')
+    if (len(sender) < 12) : sender = '593' + sender
     log.debug("[sender] [{0}] received".format(sender))
     log.debug("[receive-msg] [{0}] received".format(sender))
 
